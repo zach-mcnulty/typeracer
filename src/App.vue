@@ -4,9 +4,9 @@ import Prompt from './components/Prompt.vue'
 </script>
 
 <template>
-
-
-  <Prompt></Prompt>
+  <div class="flex justify-center">
+    <Prompt></Prompt>
+  </div>
 </template>
 
 <style scoped>
