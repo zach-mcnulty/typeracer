@@ -19,16 +19,35 @@ const endIndexOfCurrentWord = computed(() => {
 const currentWord = computed(() => prompt.value.substring(startIndexOfCurrentWord.value, endIndexOfCurrentWord.value + 1))
 const isError = computed(() => currentWord.value.indexOf(currentInput.value) != 0)
 
-const successPromptInput = computed(() => {
+const errorIndexOfCurrentWord = computed(() => {
   let i = 0;
 
-  for (i = 0; i <= currentInput.value.length; i++) {
+  for (i = 0; i < currentInput.value.length; i++) {
     if (currentWord.value[i] != currentInput.value[i]) {
-      break
+      return i
     }
   }
+})
 
-  return currentWord.value.substring(0, i)
+const successPromptInput = computed(() => {
+  if (errorIndexOfCurrentWord.value === undefined) {
+    return currentWord.value.substring(0, currentInput.value.length)
+  }
+  return currentWord.value.substring(0, errorIndexOfCurrentWord.value)
+})
+
+const errorPromptInput = computed(() => {
+  // Gotta figure out what's eligible to be an error, then slice off of that
+  if (errorIndexOfCurrentWord.value !== undefined) {
+    return prompt.value
+      .slice(startIndexOfCurrentWord.value + successPromptInput.value.length)
+      .slice(0, currentInput.value.length - errorIndexOfCurrentWord.value)
+  }
+})
+
+const neutralPromptInput = computed(() => {
+  return prompt.value
+    .slice(startIndexOfCurrentWord.value + currentInput.value.length)
 })
 
 watch(currentInput, (currentValue, prevValue) => {
@@ -51,13 +70,14 @@ watch(currentInput, (currentValue, prevValue) => {
         <span class="text-success">{{ cumulativeInput }}</span>
 
         <span class="text-success">{{ successPromptInput }}</span>
-        <!-- TODO
-        <span class="text-error">{{ errorPromptInput }}<</span>
-        <span class="text-neutral-content">{{ neutralPromptInput }}<</span>-->
+        <span class="text-error">{{ errorPromptInput }}</span>
+        <span class="text-neutral-content">{{ neutralPromptInput }}</span>
 
-        <span>{{ currentWord }}</span>
+        <!--
+        <span style="color: yellow;">{{ currentWord }}</span>
         
         <span class="text-neutral-content">{{ prompt.substring(cumulativeInput.length + currentWord.length) }}</span>
+        -->
       </div>
 
       <input type="text" v-model="currentInput" class="input" />
@@ -68,6 +88,8 @@ watch(currentInput, (currentValue, prevValue) => {
       <div>end: {{ endIndexOfCurrentWord }}</div>
       <div>currentWord: {{ currentWord }}</div>
       <div>is error: {{ isError }}</div>
+      <div>error index of current word: {{ errorIndexOfCurrentWord }}</div>
+      <div>error prompt input: {{ errorPromptInput   }}</div>
       <div>you win: {{ youWin }}</div>
     </div>
   </div>
