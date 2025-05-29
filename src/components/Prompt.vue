@@ -1,10 +1,24 @@
 <script setup>
-import { reactive, ref, computed, watch } from 'vue';
+import { reactive, ref, computed, watch, inject, watchEffect } from 'vue';
+
+const props = defineProps({
+  isMine: {
+    type: Boolean,
+    default: true
+  },
+  user: {
+    type: Object
+  }
+})
 
 const prompt = ref('These are the words you need to type');
-const cumulativeInput = ref('These are the ')
+const cumulativeInput = ref('')
 const currentInput = ref('');
 const youWin = ref(false);
+
+const socket = inject('socket');
+
+socket.on('update_prompt', (data) => prompt.value = data)
 
 const startIndexOfCurrentWord = computed(() => cumulativeInput.value.length)
 const endIndexOfCurrentWord = computed(() => {
@@ -50,6 +64,19 @@ const neutralPromptInput = computed(() => {
     .slice(startIndexOfCurrentWord.value + currentInput.value.length)
 })
 
+const inputForServer = computed(() => {
+  return cumulativeInput.value + currentInput.value;
+})
+
+watch(inputForServer, (currentValue) => {
+  if (props.isMine) {
+    socket.emit("update_input", {
+      cumulativeInput: cumulativeInput.value,
+      currentInput: currentInput.value
+    });
+  }
+})
+
 watch(currentInput, (currentValue, prevValue) => {
   if (cumulativeInput.value + currentValue == prompt.value) return youWin.value = true;
 
@@ -59,6 +86,16 @@ watch(currentInput, (currentValue, prevValue) => {
     currentInput.value = '';
   }
 });
+
+watch(() => props.user, (user) => {
+  if (!user.input) {
+    return;
+  }
+  
+  cumulativeInput.value = user.input.cumulativeInput;
+  currentInput.value = user.input.currentInput;
+
+})
 </script>
 
 <template>
@@ -80,17 +117,9 @@ watch(currentInput, (currentValue, prevValue) => {
         -->
       </div>
 
-      <input type="text" v-model="currentInput" class="input" />
-
-      <br />
-      <div>cumulativeInput: {{ cumulativeInput }}</div>
-      <div>start: {{ startIndexOfCurrentWord }}</div>
-      <div>end: {{ endIndexOfCurrentWord }}</div>
-      <div>currentWord: {{ currentWord }}</div>
-      <div>is error: {{ isError }}</div>
-      <div>error index of current word: {{ errorIndexOfCurrentWord }}</div>
-      <div>error prompt input: {{ errorPromptInput   }}</div>
-      <div>you win: {{ youWin }}</div>
+      <div v-if="isMine">
+        <input type="text" v-model="currentInput" class="input" />
+      </div>
     </div>
   </div>
 </template>
