@@ -1,4 +1,5 @@
 <script setup>
+// TODO: refactor to be index based instead of whatever this is
 import { reactive, ref, computed, watch, inject, watchEffect } from 'vue';
 
 const props = defineProps({
@@ -8,6 +9,9 @@ const props = defineProps({
   },
   user: {
     type: Object
+  },
+  raceStatus: {
+    type: String
   }
 })
 
@@ -70,7 +74,7 @@ const inputForServer = computed(() => {
 
 watch(inputForServer, (currentValue) => {
   if (props.isMine) {
-    socket.emit("update_input", {
+    socket.emit("update_racer_input", {
       cumulativeInput: cumulativeInput.value,
       currentInput: currentInput.value
     });
@@ -78,6 +82,11 @@ watch(inputForServer, (currentValue) => {
 })
 
 watch(currentInput, (currentValue, prevValue) => {
+  // if (props.raceStatus != "ACTIVE:IN_PROGRESS" || youWin.value) {
+  //   currentInput.value = "";
+  //   return;
+  // }
+
   if (cumulativeInput.value + currentValue == prompt.value) return youWin.value = true;
 
   const lastChar = currentValue[currentValue.length - 1];
@@ -95,6 +104,13 @@ watch(() => props.user, (user) => {
   cumulativeInput.value = user.input.cumulativeInput;
   currentInput.value = user.input.currentInput;
 
+})
+
+const input = ref(null);
+watch(() => props.raceStatus, (status) => {
+  if (status == 'ACTIVE:COUNTDOWN') {
+    input.value.focus();
+  }
 })
 </script>
 
@@ -118,7 +134,7 @@ watch(() => props.user, (user) => {
       </div>
 
       <div v-if="isMine">
-        <input type="text" v-model="currentInput" class="input" />
+        <input type="text" v-model="currentInput" class="input" ref="input" />
       </div>
     </div>
   </div>
