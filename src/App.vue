@@ -1,6 +1,7 @@
 <script setup>
 import { onBeforeMount, ref, provide } from "vue";
-import Prompt from './components/Prompt.vue'
+// import Prompt from './components/Prompt.vue';
+import Prompt2 from './components/Promt2.vue';
 
 const socket = io("wss://ocb.ryandeba.com", {secure: true});
 const users = ref([]);
@@ -55,18 +56,19 @@ socket.on("update_users", updateUsers);
   <hr>
 
   <div class="flex justify-center">
-    <Prompt
+    <!-- <Prompt
       :race-status="raceStatus"
-    ></Prompt>
+    ></Prompt> -->
+    <Prompt2></Prompt2>
   </div>
   
   <div class="flex">
-    <Prompt
+    <!-- <Prompt
       v-for="racer in racers.filter(r => r.sid != socket.id)"
       :is-mine="false"
       :user="racer"
       :key="racer.sid"
-    ></Prompt>
+    ></Prompt> -->
   </div>
 </template>
 
