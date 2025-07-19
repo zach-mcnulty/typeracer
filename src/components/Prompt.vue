@@ -1,116 +1,45 @@
-<script setup>
-// TODO: refactor to be index based instead of whatever this is
-import { reactive, ref, computed, watch, inject, watchEffect } from 'vue';
-
-const props = defineProps({
-  isMine: {
-    type: Boolean,
-    default: true
-  },
-  user: {
-    type: Object
-  },
-  raceStatus: {
-    type: String
-  }
-})
-
-const prompt = ref('These are the words you need to type');
-const cumulativeInput = ref('')
-const currentInput = ref('');
-const youWin = ref(false);
+<script setup lang="ts">
+import { toEditorSettings } from "typescript";
+import { ref, computed, watch, inject } from "vue";
 
 const socket = inject('socket');
 
-socket.on('update_prompt', (data) => prompt.value = data)
+const prompt = ref("These test 123.");
+const input = ref("");
+const checkeredFlag = ref(false);
 
-const startIndexOfCurrentWord = computed(() => cumulativeInput.value.length)
-const endIndexOfCurrentWord = computed(() => {
-  let indexOfNextSpace = prompt.value.substring(startIndexOfCurrentWord.value).indexOf(' ');
+const indexOfCursor = computed(() => indexOfStartOfCurrentWord.value + input.value.length);
+const indexOfStartOfCurrentWord = ref(0)
+const indexOfEndOfCurrentWord = computed(() => {
+  const start = indexOfStartOfCurrentWord.value;
+  let end = prompt.value.indexOf(' ', start);
+  end = end == -1 ? prompt.value.length : ++end;
 
-  if (indexOfNextSpace == -1) {
-    return prompt.value.length
-  }
-
-  return prompt.value.substring(startIndexOfCurrentWord.value).indexOf(' ') + cumulativeInput.value.length
-})
-const currentWord = computed(() => prompt.value.substring(startIndexOfCurrentWord.value, endIndexOfCurrentWord.value + 1))
-const isError = computed(() => currentWord.value.indexOf(currentInput.value) != 0)
-
-const errorIndexOfCurrentWord = computed(() => {
+  return end;
+});
+const indexOfError = computed<number | void>(() => {
   let i = 0;
-
-  for (i = 0; i < currentInput.value.length; i++) {
-    if (currentWord.value[i] != currentInput.value[i]) {
-      return i
+  while (i < input.value.length) {
+    if (expectedWord.value[i] !== input.value[i]) {
+      return i + indexOfStartOfCurrentWord.value;
     }
-  }
-})
 
-const successPromptInput = computed(() => {
-  if (errorIndexOfCurrentWord.value === undefined) {
-    return currentWord.value.substring(0, currentInput.value.length)
-  }
-  return currentWord.value.substring(0, errorIndexOfCurrentWord.value)
-})
-
-const errorPromptInput = computed(() => {
-  // Gotta figure out what's eligible to be an error, then slice off of that
-  if (errorIndexOfCurrentWord.value !== undefined) {
-    return prompt.value
-      .slice(startIndexOfCurrentWord.value + successPromptInput.value.length)
-      .slice(0, currentInput.value.length - errorIndexOfCurrentWord.value)
-  }
-})
-
-const neutralPromptInput = computed(() => {
-  return prompt.value
-    .slice(startIndexOfCurrentWord.value + currentInput.value.length)
-})
-
-const inputForServer = computed(() => {
-  return cumulativeInput.value + currentInput.value;
-})
-
-watch(inputForServer, (currentValue) => {
-  if (props.isMine) {
-    socket.emit("update_racer_input", {
-      cumulativeInput: cumulativeInput.value,
-      currentInput: currentInput.value
-    });
-  }
-})
-
-watch(currentInput, (currentValue, prevValue) => {
-  // if (props.raceStatus != "ACTIVE:IN_PROGRESS" || youWin.value) {
-  //   currentInput.value = "";
-  //   return;
-  // }
-
-  if (cumulativeInput.value + currentValue == prompt.value) return youWin.value = true;
-
-  const lastChar = currentValue[currentValue.length - 1];
-  if (lastChar == ' ' && !isError.value) {
-    cumulativeInput.value += currentValue
-    currentInput.value = '';
+    i++;
   }
 });
+const expectedWord = computed(() => prompt.value.slice(indexOfStartOfCurrentWord.value, indexOfEndOfCurrentWord.value));
 
-watch(() => props.user, (user) => {
-  if (!user.input) {
-    return;
+watch(input, () => {
+  if (input.value === expectedWord.value) {
+    if (indexOfCursor.value == prompt.value.length) {
+      checkeredFlag.value = true;
+    }
+    indexOfStartOfCurrentWord.value = indexOfCursor.value;
+    input.value = "";
   }
-  
-  cumulativeInput.value = user.input.cumulativeInput;
-  currentInput.value = user.input.currentInput;
 
-})
-
-const input = ref(null);
-watch(() => props.raceStatus, (status) => {
-  if (status == 'ACTIVE:COUNTDOWN') {
-    input.value.focus();
-  }
+  let progressIndex = typeof indexOfError.value == 'number' ? indexOfError.value : indexOfCursor.value;
+  socket.emit("update_racer_progress", (progressIndex / prompt.value.length) * 100);
 })
 </script>
 
@@ -118,24 +47,45 @@ watch(() => props.raceStatus, (status) => {
   <div class="card bg-base-200 w-96 shadow-sm">
     <div class="card-body">
       <div>
-        <!-- <span>{{ prompt }}</span> -->
-
-        <span class="text-success">{{ cumulativeInput }}</span>
-
-        <span class="text-success">{{ successPromptInput }}</span>
-        <span class="text-error">{{ errorPromptInput }}</span>
-        <span class="text-neutral-content">{{ neutralPromptInput }}</span>
-
-        <!--
-        <span style="color: yellow;">{{ currentWord }}</span>
-        
-        <span class="text-neutral-content">{{ prompt.substring(cumulativeInput.length + currentWord.length) }}</span>
-        -->
+        <span
+          v-for="(char, i) in prompt"
+          :key="i"
+          class="text-neutral-content relative text-lg"
+          :class="{
+            'text-success!':
+              i < indexOfStartOfCurrentWord ||
+              (typeof indexOfError == 'number' && i < indexOfError) ||
+              (typeof indexOfError == 'undefined' && i < indexOfCursor),
+            'text-error!': 
+              typeof indexOfError == 'number' &&
+              i >= indexOfError && i < indexOfCursor,
+            'super-duper-cursor-of-doom': i == indexOfCursor
+          }"
+        >
+          {{ char }}
+        </span>
       </div>
 
-      <div v-if="isMine">
-        <input type="text" v-model="currentInput" class="input" ref="input" />
-      </div>
+      <input type="text" v-model="input" class="input" />
     </div>
   </div>
 </template>
+
+<style>
+.super-duper-cursor-of-doom::before {
+  content: '';
+  width: 1px;
+  height: 100%;
+  background: black;
+  position: absolute;
+  top: 0;
+  left: 0;
+  animation: blink 1s step-start 0s infinite;
+}
+
+@keyframes blink {
+  50% {
+    opacity: 0.0;
+  }
+}
+</style>

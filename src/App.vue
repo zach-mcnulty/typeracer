@@ -1,7 +1,7 @@
-<script setup>
+<script setup lang="ts">
+// TODO: speedometer, ts all the things, cool avatars, server stuff
 import { onBeforeMount, ref, provide } from "vue";
-// import Prompt from './components/Prompt.vue';
-import Prompt2 from './components/Promt2.vue';
+import Prompt from './components/Prompt.vue';
 
 const socket = io("wss://ocb.ryandeba.com", {secure: true});
 const users = ref([]);
@@ -23,8 +23,8 @@ onBeforeMount(() => {
   socket.on('update_countdown', (data) => countdown.value = data)
   socket.on('update_race_status', (data) => raceStatus.value = data)
   socket.on('update_racers', (data) => racers.value = data)
-  socket.on('update_racer_input', ({ sid, racer_input }) => {
-    racers.value.find(r => r.sid == sid).racer_input = racer_input;
+  socket.on('update_racer_progress', ({ sid, progress }) => {
+    racers.value.find(r => r.sid == sid).progress = progress;
   })
 })
 
@@ -56,19 +56,11 @@ socket.on("update_users", updateUsers);
   <hr>
 
   <div class="flex justify-center">
-    <!-- <Prompt
-      :race-status="raceStatus"
-    ></Prompt> -->
-    <Prompt2></Prompt2>
+    <Prompt></Prompt>
   </div>
   
   <div class="flex">
-    <!-- <Prompt
-      v-for="racer in racers.filter(r => r.sid != socket.id)"
-      :is-mine="false"
-      :user="racer"
-      :key="racer.sid"
-    ></Prompt> -->
+    <input v-for="racer in racers" :key="racer.sid" type="range" name="" id="" max="100" :value="racer.progress ?? 0">
   </div>
 </template>
 
