@@ -1,10 +1,9 @@
 <script setup lang="ts">
 import { toEditorSettings } from "typescript";
-import { ref, computed, watch, inject } from "vue";
+import { store } from '../store/store.ts'
+import { ref, computed, watch } from "vue";
+import Speedometer from "./Speedometer.vue"
 
-const socket = inject('socket');
-
-const prompt = ref("These test 123.");
 const input = ref("");
 const checkeredFlag = ref(false);
 
@@ -12,8 +11,8 @@ const indexOfCursor = computed(() => indexOfStartOfCurrentWord.value + input.val
 const indexOfStartOfCurrentWord = ref(0)
 const indexOfEndOfCurrentWord = computed(() => {
   const start = indexOfStartOfCurrentWord.value;
-  let end = prompt.value.indexOf(' ', start);
-  end = end == -1 ? prompt.value.length : ++end;
+  let end = store.prompt.indexOf(' ', start);
+  end = end == -1 ? store.prompt.length : ++end;
 
   return end;
 });
@@ -27,11 +26,11 @@ const indexOfError = computed<number | void>(() => {
     i++;
   }
 });
-const expectedWord = computed(() => prompt.value.slice(indexOfStartOfCurrentWord.value, indexOfEndOfCurrentWord.value));
+const expectedWord = computed(() => store.prompt.slice(indexOfStartOfCurrentWord.value, indexOfEndOfCurrentWord.value));
 
 watch(input, () => {
   if (input.value === expectedWord.value) {
-    if (indexOfCursor.value == prompt.value.length) {
+    if (indexOfCursor.value == store.prompt.length) {
       checkeredFlag.value = true;
     }
     indexOfStartOfCurrentWord.value = indexOfCursor.value;
@@ -39,7 +38,7 @@ watch(input, () => {
   }
 
   let progressIndex = typeof indexOfError.value == 'number' ? indexOfError.value : indexOfCursor.value;
-  socket.emit("update_racer_progress", (progressIndex / prompt.value.length) * 100);
+  store.socket.emit("update_racer_progress", (progressIndex / store.prompt.length) * 100);
 })
 </script>
 
@@ -48,7 +47,7 @@ watch(input, () => {
     <div class="card-body">
       <div>
         <span
-          v-for="(char, i) in prompt"
+          v-for="(char, i) in store.prompt"
           :key="i"
           class="text-neutral-content relative text-lg"
           :class="{
@@ -56,7 +55,7 @@ watch(input, () => {
               i < indexOfStartOfCurrentWord ||
               (typeof indexOfError == 'number' && i < indexOfError) ||
               (typeof indexOfError == 'undefined' && i < indexOfCursor),
-            'text-error!': 
+            'text-error!':
               typeof indexOfError == 'number' &&
               i >= indexOfError && i < indexOfCursor,
             'super-duper-cursor-of-doom': i == indexOfCursor
@@ -67,6 +66,7 @@ watch(input, () => {
       </div>
 
       <input type="text" v-model="input" class="input" />
+      <Speedometer :num-all-typed-entries="indexOfEndOfCurrentWord + input.length"></Speedometer>
     </div>
   </div>
 </template>

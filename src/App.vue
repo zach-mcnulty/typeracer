@@ -1,34 +1,41 @@
 <script setup lang="ts">
 // TODO: speedometer, ts all the things, cool avatars, server stuff
-import { onBeforeMount, ref, provide } from "vue";
-import Prompt from './components/Prompt.vue';
+// server stuff: stop race after n inactivity, win condition?
 
-const socket = io("wss://ocb.ryandeba.com", {secure: true});
+import { onBeforeMount, ref, watch } from "vue"
+import { store } from './store/store.ts'
+import Prompt from './components/Prompt.vue'
+
 const users = ref([]);
 const countdown = ref(10)
 const raceStatus = ref("");
 const racers = ref([])
-
-provide('socket', socket);
 
 const updateUsers = data => {
   users.value = data;
 }
 
 const createRace = () => {
-  socket.emit('create_race');
+  store.socket.emit('create_race');
 }
 
 onBeforeMount(() => {
-  socket.on('update_countdown', (data) => countdown.value = data)
-  socket.on('update_race_status', (data) => raceStatus.value = data)
-  socket.on('update_racers', (data) => racers.value = data)
-  socket.on('update_racer_progress', ({ sid, progress }) => {
+  store.socket.on('update_countdown', (data) => countdown.value = data)
+  store.socket.on('update_race_status', (data) => raceStatus.value = data)
+  store.socket.on('update_racers', (data) => racers.value = data)
+  store.socket.on('update_racer_progress', ({ sid, progress }) => {
     racers.value.find(r => r.sid == sid).progress = progress;
   })
+  store.socket.on('update_prompt', (data) => store.prompt = data)
 })
 
-socket.on("update_users", updateUsers);
+watch(raceStatus, (status) => {
+  if (status == "ACTIVE:IN_PROGRESS") {
+    store.startTime = new Date().getTime()
+  }
+})
+
+store.socket.on("update_users", updateUsers);
 </script>
 
 <template>
@@ -43,7 +50,7 @@ socket.on("update_users", updateUsers);
   <div class="flex justify-center">
     {{ users }}
   </div>
-  
+
   <button
     type="button"
     class="btn"
@@ -58,7 +65,7 @@ socket.on("update_users", updateUsers);
   <div class="flex justify-center">
     <Prompt></Prompt>
   </div>
-  
+
   <div class="flex">
     <input v-for="racer in racers" :key="racer.sid" type="range" name="" id="" max="100" :value="racer.progress ?? 0">
   </div>
