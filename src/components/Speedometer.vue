@@ -1,9 +1,10 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted } from "vue";
+import { ref, computed, onMounted, onUnmounted, watch } from "vue";
 import { store } from "../store/store"
 
 const props = defineProps<{
   numAllTypedEntries: number
+  superDuperPauserOfDoom: boolean
 }>()
 
 let currentTimeInterval
@@ -12,7 +13,7 @@ const currentTime = ref(0)
 onMounted(() => {
   currentTimeInterval = setInterval(() => {
     currentTime.value = new Date().getTime()
-  }, 1000)
+  }, 500)
 })
 
 onUnmounted(() => {
@@ -31,6 +32,8 @@ const speed = computed<number>(() => {
 
 const ticks = new Array(6 * 3 + 8);
 const needleRotate = computed(() => speed.value / 0.54 - 110)
+
+watch(() => props.superDuperPauserOfDoom, (bool) => bool && clearInterval(currentTimeInterval))
 </script>
 
 <template>
@@ -109,7 +112,7 @@ const needleRotate = computed(() => speed.value / 0.54 - 110)
   width: 10px;
   background: red;
   height: 50%;
-  transition: 0.2s all;
+  transition: 1s all;
   z-index: 99;
 }
 </style>

@@ -4,6 +4,8 @@ import { store } from '../store/store.ts'
 import { ref, computed, watch } from "vue";
 import Speedometer from "./Speedometer.vue"
 
+defineProps<{ disabled: boolean}>()
+
 const input = ref("");
 const checkeredFlag = ref(false);
 
@@ -26,7 +28,11 @@ const indexOfError = computed<number | void>(() => {
     i++;
   }
 });
-const expectedWord = computed(() => store.prompt.slice(indexOfStartOfCurrentWord.value, indexOfEndOfCurrentWord.value));
+const expectedWord = computed<string>(() => store.prompt.slice(indexOfStartOfCurrentWord.value, indexOfEndOfCurrentWord.value));
+const progress = computed<number>(() => {
+  let progressIndex = typeof indexOfError.value == 'number' ? indexOfError.value : indexOfCursor.value;
+  return (progressIndex / store.prompt.length) * 100
+})
 
 watch(input, () => {
   if (input.value === expectedWord.value) {
@@ -37,15 +43,14 @@ watch(input, () => {
     input.value = "";
   }
 
-  let progressIndex = typeof indexOfError.value == 'number' ? indexOfError.value : indexOfCursor.value;
-  store.socket.emit("update_racer_progress", (progressIndex / store.prompt.length) * 100);
+  store.socket.emit("update_racer_progress", progress.value);
 })
 </script>
 
 <template>
   <div class="card bg-base-200 w-96 shadow-sm">
     <div class="card-body">
-      <div>
+      <div class="mono">
         <span
           v-for="(char, i) in store.prompt"
           :key="i"
@@ -55,37 +60,39 @@ watch(input, () => {
               i < indexOfStartOfCurrentWord ||
               (typeof indexOfError == 'number' && i < indexOfError) ||
               (typeof indexOfError == 'undefined' && i < indexOfCursor),
-            'text-error!':
+            'bg-error!':
               typeof indexOfError == 'number' &&
               i >= indexOfError && i < indexOfCursor,
             'super-duper-cursor-of-doom': i == indexOfCursor
           }"
+          style="white-space: preserve;"
         >
           {{ char }}
         </span>
       </div>
 
-      <input type="text" v-model="input" class="input" />
-      <Speedometer :num-all-typed-entries="indexOfEndOfCurrentWord + input.length"></Speedometer>
+      <input type="text" v-model="input"
+      :readonly="disabled"
+      autofocus
+      class="input" />
+      <Speedometer :num-all-typed-entries="indexOfStartOfCurrentWord + input.length" :super-duper-pauser-of-doom="progress === 100"></Speedometer>
     </div>
   </div>
 </template>
 
 <style>
-.super-duper-cursor-of-doom::before {
-  content: '';
-  width: 1px;
-  height: 100%;
-  background: black;
-  position: absolute;
-  top: 0;
-  left: 0;
-  animation: blink 1s step-start 0s infinite;
+.super-duper-cursor-of-doom {
+  background: oklch(from var(--color-info) l c h / 0.50);
+  animation: blink 1s step-end 0s infinite;
 }
 
 @keyframes blink {
   50% {
-    opacity: 0.0;
+    background: none;
   }
+}
+
+.mono {
+  font-family: "Roboto Mono", monospace;
 }
 </style>

@@ -1,8 +1,10 @@
 import { reactive } from 'vue'
+import { io, Socket } from "socket.io-client"
+import { ServerToClientEvents, ClientToServerEvents } from './types/socketEvents'
 
 interface Store {
   startTime: number | undefined
-  socket: object
+  socket: Socket<ServerToClientEvents, ClientToServerEvents>
   prompt: string
 }
 
@@ -11,5 +13,5 @@ interface Store {
 export const store = reactive<Store>({
   startTime: undefined,
   socket: io("wss://ocb.ryandeba.com", { secure: true }),
-  prompt: "These are some placeholder words"
+  prompt: "These are some placeholder words. They are really great words. You should type them up quickly, unless you're a loser."
 })

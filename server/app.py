@@ -3,7 +3,6 @@ from flask_socketio import SocketIO, send, emit
 import time
 
 # TODO: remove globals
-# TODO: put this in source control!
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'secret!'
@@ -79,7 +78,7 @@ def connect():
     global guest_number
 
     guest_number += 1
-    
+
     client = {
         "username": "Guest" + str(guest_number),
         "sid": request.sid,
@@ -96,13 +95,13 @@ def disconnect():
     global connected_clients
 
     connected_clients = [x for x in connected_clients if x["sid"] != request.sid]
-   
+
     emit("update_users", connected_clients, broadcast=True)
 
 @socketio.on("create_race")
 def handle_message():
     type_race.newRace("These are the words you need to type. You must type them quickly if you want to be victorious.")
-    
+
 @socketio.on("update_racer_progress")
 def handle_message(data):
     racer = [x for x in type_race.racers if x.sid == request.sid][0]
