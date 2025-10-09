@@ -1,15 +1,16 @@
 <script setup lang="ts">
-import { toEditorSettings } from "typescript";
 import { store } from '../store/store.ts'
-import { ref, computed, watch } from "vue";
+import { ref, computed, watch, useTemplateRef } from "vue";
 import Speedometer from "./Speedometer.vue"
 
-defineProps<{ disabled: boolean}>()
+const props = defineProps<{ disabled: boolean}>()
 
-const input = ref("");
+const promptRef = useTemplateRef("prompt")
+
+const userInput = ref("");
 const checkeredFlag = ref(false);
 
-const indexOfCursor = computed(() => indexOfStartOfCurrentWord.value + input.value.length);
+const indexOfCursor = computed(() => indexOfStartOfCurrentWord.value + userInput.value.length);
 const indexOfStartOfCurrentWord = ref(0)
 const indexOfEndOfCurrentWord = computed(() => {
   const start = indexOfStartOfCurrentWord.value;
@@ -20,8 +21,8 @@ const indexOfEndOfCurrentWord = computed(() => {
 });
 const indexOfError = computed<number | void>(() => {
   let i = 0;
-  while (i < input.value.length) {
-    if (expectedWord.value[i] !== input.value[i]) {
+  while (i < userInput.value.length) {
+    if (expectedWord.value[i] !== userInput.value[i]) {
       return i + indexOfStartOfCurrentWord.value;
     }
 
@@ -34,16 +35,22 @@ const progress = computed<number>(() => {
   return (progressIndex / store.prompt.length) * 100
 })
 
-watch(input, () => {
-  if (input.value === expectedWord.value) {
+watch(userInput, () => {
+  if (userInput.value === expectedWord.value) {
     if (indexOfCursor.value == store.prompt.length) {
       checkeredFlag.value = true;
     }
     indexOfStartOfCurrentWord.value = indexOfCursor.value;
-    input.value = "";
+    userInput.value = "";
   }
 
   store.socket.emit("update_racer_progress", progress.value);
+})
+
+watch(() => props.disabled, () => {
+  if (!props.disabled) {
+    promptRef.value?.focus()
+  }
 })
 </script>
 
@@ -71,11 +78,18 @@ watch(input, () => {
         </span>
       </div>
 
-      <input type="text" v-model="input"
-      :readonly="disabled"
-      autofocus
-      class="input" />
-      <Speedometer :num-all-typed-entries="indexOfStartOfCurrentWord + input.length" :super-duper-pauser-of-doom="progress === 100"></Speedometer>
+      <input
+        v-model="userInput"
+        type="text"
+        :readonly="disabled"
+        autofocus
+        class="input"
+        ref="prompt"
+      />
+      <Speedometer
+        :num-all-typed-entries="indexOfStartOfCurrentWord + userInput.length"
+        :super-duper-pauser-of-doom="progress === 100"
+      ></Speedometer>
     </div>
   </div>
 </template>

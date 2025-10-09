@@ -3,5 +3,5 @@ export enum RaceStatus {
   'COUNTDOWN',
   'IN_PROGRESS',
   'FINISHED',
-  'TERMINATED'
+  'TERMINATED',
 }

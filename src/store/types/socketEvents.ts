@@ -6,10 +6,11 @@ export interface ServerToClientEvents {
   'update_racers': any
   'update_racer_progress': any
   'update_prompt': any
-  'update_users'
+  'update_users': any
 }
 
 export interface ClientToServerEvents {
-  create_race: () => void;
-  update_racer_progress: (n: number) => void;
+  create_race: () => void
+  update_racer_progress: (n: number) => void
+  toggle_ready: () => void
 }
