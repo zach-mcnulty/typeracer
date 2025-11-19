@@ -3,7 +3,7 @@ import { io, Socket } from "socket.io-client"
 import { ServerToClientEvents, ClientToServerEvents } from './types/socketEvents'
 
 interface Store {
-  startTime: number | undefined
+  clientStartTime: number | undefined
   socket: Socket<ServerToClientEvents, ClientToServerEvents>
   prompt: string
 }
@@ -11,7 +11,7 @@ interface Store {
 
 
 export const store = reactive<Store>({
-  startTime: undefined,
+  clientStartTime: undefined,
   socket: io("wss://ocb.ryandeba.com", { secure: true }),
   prompt: "These are some placeholder words. They are really great words. You should type them up quickly, unless you're a loser."
 })

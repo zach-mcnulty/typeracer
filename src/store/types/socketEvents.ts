@@ -13,4 +13,5 @@ export interface ClientToServerEvents {
   create_race: () => void
   update_racer_progress: (n: number) => void
   toggle_ready: () => void
+  update_racer_wpm: any
 }

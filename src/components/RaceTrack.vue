@@ -1,6 +1,7 @@
 <script setup lang="ts">
 // TODO: show a version of the prompt for each racer with a cool parralax effect
 import { ref } from 'vue'
+import { store } from '../store/store.ts'
 import type { Racer } from '../App.vue';
 
 defineProps<{ racers: Racer[] }>()
@@ -11,6 +12,7 @@ defineProps<{ racers: Racer[] }>()
     <div class="flex flex-col w-full">
       <div class="relative border-b-2 w-full" v-for="r in racers" :key="r.sid">
         {{ r.username }}
+        {{ store.socket.id == r.sid ? '(You)' : '' }}
         <img
           src="../assets/27186974_ca46_2u5r_220404.svg"
           style="height:50px; transform: scaleX(-1); position: relative;"

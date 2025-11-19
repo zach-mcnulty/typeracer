@@ -7,6 +7,7 @@ import { store } from './store/store.ts'
 import Prompt from './components/Prompt.vue'
 import RaceTrack from './components/RaceTrack.vue'
 import { RaceStatus } from "./store/types/raceStatus.ts"
+import RacersGrid from "./components/RacersGrid.vue"
 
 export interface User {
   sid: string
@@ -16,6 +17,8 @@ export interface User {
 
 export interface Racer extends User {
   progress?: number
+  wpm?: number
+  duration?: number
 }
 
 const users = ref<User[]>([]);
@@ -31,14 +34,6 @@ const createRace = () => {
   store.socket.emit('create_race');
 }
 
-const toggleReady = (user: User) => {
-  if (user.sid != store.socket.id) {
-    return
-  }
-
-  store.socket.emit('toggle_ready')
-}
-
 onBeforeMount(() => {
   store.socket.on('update_countdown', (data: number) => {
     countdown.value = data
@@ -50,6 +45,14 @@ onBeforeMount(() => {
   store.socket.on('update_racer_progress', ({ sid, progress }) => {
     let racer = racers.value.find(r => r.sid == sid)
     racer && (racer.progress = progress);
+  })
+  store.socket.on('update_racer_wpm', ({ sid, wpm }) => {
+    let racer = racers.value.find(r => r.sid == sid)
+    racer && (racer.wpm = wpm);
+  })
+  store.socket.on('update_racer_duration', ({ sid, duration }) => {
+    let racer = racers.value.find(r => r.sid == sid)
+    racer && (racer.duration = duration);
   })
   store.socket.on('update_prompt', (data) => store.prompt = data)
 })
@@ -71,7 +74,7 @@ const onUpdateRacers = (data: {sid: string, progress: number}[]) => {
 
 watch(raceStatus, (status) => {
   if (status == RaceStatus.IN_PROGRESS) {
-    store.startTime = new Date().getTime()
+    store.clientStartTime = new Date().getTime()
   }
 })
 
@@ -115,6 +118,10 @@ store.socket.on("update_users", updateUsers);
 
     <template v-if="raceStatus === RaceStatus.FINISHED">
       TODO: show rankings or whatever
+
+      <pre>
+        {{ racers }}
+      </pre>
     </template>
 
     <template v-if="raceStatus === RaceStatus.TERMINATED">
@@ -123,31 +130,7 @@ store.socket.on("update_users", updateUsers);
   </div>
 
   <div class="overflow-x-auto">
-    <table class="table">
-      <thead>
-        <tr>
-          <th>Username</th>
-          <th>Ready?</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr
-          v-for="u in users"
-          :class="{'bg-blue-200': u.sid == store.socket.id}"
-        >
-          <td>{{ u.username }}</td>
-          <td>
-            <input
-              type="checkbox"
-              :checked="u.ready"
-              :disabled="u.sid != store.socket.id || u.ready"
-              class="checkbox checkbox-lg"
-              @input.prevent="toggleReady(u)"
-            >
-          </td>
-        </tr>
-      </tbody>
-    </table>
+    <RacersGrid :users :racers :race-status />
   </div>
 </template>
 

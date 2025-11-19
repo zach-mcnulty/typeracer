@@ -7,7 +7,7 @@ const props = defineProps<{
   superDuperPauserOfDoom: boolean
 }>()
 
-let currentTimeInterval
+let currentTimeInterval: NodeJS.Timeout | undefined;
 const currentTime = ref(0)
 
 onMounted(() => {
@@ -21,8 +21,8 @@ onUnmounted(() => {
 })
 
 const speed = computed<number>(() => {
-  if (typeof store.startTime == 'number') {
-    const seconds = (currentTime.value - store.startTime) / 1000;
+  if (typeof store.clientStartTime == 'number') {
+    const seconds = (currentTime.value - store.clientStartTime) / 1000;
     const minutes = seconds / 60;
     return (props.numAllTypedEntries / 5) / minutes;
   }
@@ -33,7 +33,13 @@ const speed = computed<number>(() => {
 const ticks = new Array(6 * 3 + 8);
 const needleRotate = computed(() => speed.value / 0.54 - 110)
 
-watch(() => props.superDuperPauserOfDoom, (bool) => bool && clearInterval(currentTimeInterval))
+watch(() => props.superDuperPauserOfDoom, (bool) => {
+  if (bool) {
+    clearInterval(currentTimeInterval)
+    store.socket.emit("update_racer_wpm", speed.value)
+    store.socket.emit("update_racer_duration", new Date().getTime() - store.clientStartTime)
+  }
+})
 </script>
 
 <template>
