@@ -118,10 +118,6 @@ store.socket.on("update_users", updateUsers);
 
     <template v-if="raceStatus === RaceStatus.FINISHED">
       TODO: show rankings or whatever
-
-      <pre>
-        {{ racers }}
-      </pre>
     </template>
 
     <template v-if="raceStatus === RaceStatus.TERMINATED">
