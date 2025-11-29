@@ -95,12 +95,6 @@ store.socket.on("update_users", updateUsers);
         >
             Start race with {{ users.filter(u => u.ready).length }} racers
         </button>
-
-        <table>
-          <tr>
-            <td></td>
-          </tr>
-        </table>
       </div>
     </template>
 
