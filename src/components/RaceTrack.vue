@@ -1,6 +1,6 @@
 <script setup lang="ts">
 // TODO: show a version of the prompt for each racer with a cool parralax effect
-import { ref, watch, computed } from 'vue'
+import { ref, watch, computed, onMounted, nextTick } from 'vue'
 import { store } from '../store/store.ts'
 import type { Racer } from '../App.vue';
 
@@ -8,7 +8,7 @@ const props = defineProps<{ racers: Racer[] }>()
 
 const track = ref()
 const trackWidth = ref(0)
-const car = ref([])
+const cars = ref([])
 const carWidth = ref(0)
 
 const racersPixelsFromLeft = computed(() => {
@@ -17,23 +17,17 @@ const racersPixelsFromLeft = computed(() => {
   })
 })
 
-watch(() => [track.value, car.value], ([track, car]) => {
-  if (car.length > 0) {
-    const img = car[0];
-
-    img.onload = function() {
-      const rect = img.getBoundingClientRect();
-      carWidth.value = rect.width;
-
-      trackWidth.value = track.getBoundingClientRect().width;
-    };
-
-    // Handle cases where the image might already be loaded (e.g., if cached)
-    if (img.complete) {
-      img.onload();
-    }
+const unwatch = watch(racersPixelsFromLeft, () => {
+  if (cars.value.length && !carWidth.value) {
+    const img = cars.value[0] as HTMLImageElement;
+    carWidth.value = img.getBoundingClientRect().width;
+    unwatch();
   }
-}, {immediate: true})
+})
+
+onMounted(() => {
+  trackWidth.value = track.value.getBoundingClientRect().width;
+})
 </script>
 
 <template>
@@ -44,9 +38,9 @@ watch(() => [track.value, car.value], ([track, car]) => {
         {{ store.socket.id == r.sid ? '(You)' : '' }}
         <img
           src="../assets/27186974_ca46_2u5r_220404.svg"
-          style="height:50px; transform: scaleX(-1); position: relative;"
+          style="height: 50px; transform: scaleX(-1); position: relative;"
           :style="'left: ' + racersPixelsFromLeft[i] + 'px'"
-          ref="car"
+          ref="cars"
         >
       </div>
     </div>
@@ -56,8 +50,8 @@ watch(() => [track.value, car.value], ([track, car]) => {
 </template>
 
 <style scoped>
-#finish-line {
-  background: repeating-conic-gradient(#fff 0 25%, #000 0 50%) 50% / 25px 25px;
-  width: 10%;
-}
+  #finish-line {
+    background: repeating-conic-gradient(#fff 0 25%, #000 0 50%) 50% / 25px 25px;
+    width: 10%;
+  }
 </style>

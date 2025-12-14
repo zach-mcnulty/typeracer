@@ -110,10 +110,6 @@ store.socket.on("update_users", updateUsers);
       {{ countdown }}
     </span>
 
-    <template v-if="raceStatus === RaceStatus.FINISHED">
-      TODO: show rankings or whatever
-    </template>
-
     <template v-if="raceStatus === RaceStatus.TERMINATED">
       TODO: race was terminated
     </template>

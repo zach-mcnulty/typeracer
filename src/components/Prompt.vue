@@ -85,6 +85,7 @@ watch(() => props.disabled, () => {
         autofocus
         class="input"
         ref="prompt"
+        max-length="15"
       />
       <Speedometer
         :num-all-typed-entries="indexOfStartOfCurrentWord + userInput.length"

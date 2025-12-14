@@ -1,6 +1,11 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted, watch } from "vue";
 import { store } from "../store/store"
+import Gauge from "./Gauge.vue";
+
+
+// TODO: Improve jankiness (speedometer freaks out at the start)
+// Add numbers to the ticks
 
 const props = defineProps<{
   numAllTypedEntries: number
@@ -21,7 +26,10 @@ onUnmounted(() => {
 })
 
 const speed = computed<number>(() => {
-  if (typeof store.clientStartTime == 'number') {
+  if (
+    typeof store.clientStartTime == 'number'
+    && currentTime.value - store.clientStartTime > 1000 // currentTime only updates in an interval, so wait a second so the initial speed is somewhat reasonable
+  ) {
     const seconds = (currentTime.value - store.clientStartTime) / 1000;
     const minutes = seconds / 60;
     return (props.numAllTypedEntries / 5) / minutes;
@@ -43,26 +51,9 @@ watch(() => props.superDuperPauserOfDoom, (bool) => {
 </script>
 
 <template>
-  <div class="gauge">
-    <div class="inner-gauge">
-      <div class="needle" :style="{transform: `rotate(${needleRotate}deg)`}"></div>
-      <div class="tick-wrapper">
-        <span
-          v-for="(tick, i) in ticks"
-          :key="i"
-          class="tick"
-          :style="{transform: `rotate(${i * 8.8 - 110}deg)`}"
-        >
-          <span v-if="i % 4 == 0" :style="{transform: `rotate(${-(i * 8.8 - 110)}deg)`, position: `absolute`}">
-            {{ i * 5 }}
-          </span>
-        </span>
-      </div>
-
-    </div>
-  </div>
-
-  {{ speed }}
+  <Gauge
+    :value="speed"
+  ></Gauge>
 </template>
 
 <style scoped>
