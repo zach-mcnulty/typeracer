@@ -132,3 +132,7 @@ store.socket.on("update_users", updateUsers);
     opacity: 1;
   }
 </style>
+
+// update naming
+// error tracking
+//

@@ -34,6 +34,10 @@ const toggleReady = (user: User) => {
 
   store.socket.emit('toggle_ready')
 }
+
+const refreshUsername = (user: User) => {
+  store.socket.emit("refresh_username")
+}
 </script>
 
 <template>
@@ -55,13 +59,20 @@ const toggleReady = (user: User) => {
               <input
                 type="checkbox"
                 :checked="u.ready"
-                :disabled="u.sid != store.socket.id || u.ready"
+                :disabled="u.sid != store.socket.id"
                 class="checkbox checkbox-lg"
                 @input.prevent="toggleReady(u)"
               >
             </template>
             <template v-else-if="column.field == 'duration'">
               {{ `${(u.duration / 1000).toFixed(2)} secs.` }}
+            </template>
+            <template v-else-if="column.field == 'username'">
+              {{ u.username }}
+
+              <button class="btn btn-circle btn-xs btn-ghost" v-if="u.sid === store.socket.id" @click="refreshUsername">
+                <img src="https://www.svgrepo.com/show/425978/refresh.svg" alt="" class="w-75 h-75">
+              </button>
             </template>
             <template v-else>
               {{ u[column.field] }}

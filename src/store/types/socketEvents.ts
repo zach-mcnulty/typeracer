@@ -15,4 +15,5 @@ export interface ClientToServerEvents {
   update_racer_duration: (n: number) => void
   toggle_ready: () => void
   update_racer_wpm: any
+  refresh_username: () => void
 }
