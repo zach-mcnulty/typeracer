@@ -52,7 +52,7 @@ const refreshUsername = (user: User) => {
       <tbody>
         <tr
           v-for="u in raceStatus == RaceStatus.INACTIVE ? users : racers"
-          :class="{'bg-blue-200': u.sid == store.socket.id}"
+          :class="{'bg-blue-200 dark:bg-blue-800': u.sid == store.socket.id}"
         >
           <td v-for="column in visibleColumns" :key="column.field">
             <template v-if="column.field == 'ready'">

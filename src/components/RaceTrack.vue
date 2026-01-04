@@ -1,6 +1,5 @@
 <script setup lang="ts">
 // TODO: show a version of the prompt for each racer with a cool parralax effect
-// TODO: wait a second after all racers are finished before switch race status  (so final racer can see their checkered flag)
 import { ref, watch, computed, onMounted, nextTick } from 'vue'
 import { store } from '../store/store.ts'
 import type { Racer } from '../App.vue';

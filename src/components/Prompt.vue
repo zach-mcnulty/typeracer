@@ -9,15 +9,15 @@ const promptRef = useTemplateRef("prompt")
 
 const userInput = ref("");
 const checkeredFlag = ref(false);
+const errorCount = ref(0);
 
 const indexOfCursor = computed(() => indexOfStartOfCurrentWord.value + userInput.value.length);
 const indexOfStartOfCurrentWord = ref(0)
 const indexOfEndOfCurrentWord = computed(() => {
-  const start = indexOfStartOfCurrentWord.value;
-  let end = store.prompt.indexOf(' ', start);
+  let end = store.prompt.indexOf(' ', indexOfStartOfCurrentWord.value);
   end = end == -1 ? store.prompt.length : ++end;
 
-  return end;
+  return end; // TODO: can we return a couple lines up?
 });
 const indexOfError = computed<number | void>(() => {
   let i = 0;
@@ -35,13 +35,17 @@ const progress = computed<number>(() => {
   return (progressIndex / store.prompt.length) * 100
 })
 
-watch(userInput, () => {
+watch(userInput, (current, previous) => {
   if (userInput.value === expectedWord.value) {
     if (indexOfCursor.value == store.prompt.length) {
       checkeredFlag.value = true;
     }
     indexOfStartOfCurrentWord.value = indexOfCursor.value;
     userInput.value = "";
+  } else if (current.length > previous.length) {
+    if (current.split("").pop() != store.prompt[indexOfCursor.value - 1]) {
+      errorCount.value++;
+    }
   }
 
   store.socket.emit("update_racer_progress", progress.value);
@@ -55,13 +59,13 @@ watch(() => props.disabled, () => {
 </script>
 
 <template>
-  <div class="card bg-base-200 w-96 shadow-sm">
+  <div class="card bg-base-200 shadow-sm">
     <div class="card-body">
       <div class="mono">
         <span
           v-for="(char, i) in store.prompt"
           :key="i"
-          class="text-neutral-content relative text-lg"
+          class="text-neutral-600 dark:text-neutral-300 relative text-lg"
           :class="{
             'text-success!':
               i < indexOfStartOfCurrentWord ||
@@ -85,12 +89,16 @@ watch(() => props.disabled, () => {
         autofocus
         class="input"
         ref="prompt"
-        max-length="15"
+        maxlength="15"
       />
       <Speedometer
         :num-all-typed-entries="indexOfStartOfCurrentWord + userInput.length"
         :super-duper-pauser-of-doom="progress === 100"
       ></Speedometer>
+
+      <div>
+        Error Count: {{ errorCount }}
+      </div>
     </div>
   </div>
 </template>
