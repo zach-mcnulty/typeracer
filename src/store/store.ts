@@ -1,17 +1,50 @@
-import { reactive } from 'vue'
+import { reactive, watch } from 'vue'
 import { io, Socket } from "socket.io-client"
 import { ServerToClientEvents, ClientToServerEvents } from './types/socketEvents'
 
 interface Store {
-  clientStartTime: number | undefined
+  clientStartTime: number
   socket: Socket<ServerToClientEvents, ClientToServerEvents>
   prompt: string
+  wpm: number
+  errors: number
+  progress: number
+  duration: number
+  _interval?: NodeJS.Timeout
+
+  emitStatusUpdate: () => void
+  startClientInterval: () => void
+  stopClientInterval: () => void
 }
 
-
+export interface StatusUpdate {
+  wpm: number
+  errors: number
+  progress: number
+  duration: number
+}
 
 export const store = reactive<Store>({
-  clientStartTime: undefined,
+  clientStartTime: 0,
   socket: io("wss://ocb.ryandeba.com", { secure: true }),
-  prompt: "These are some placeholder words. They are really great words. You should type them up quickly, unless you're a loser."
+  prompt: '',
+  wpm: 0,
+  errors: 0,
+  progress: 0,
+  duration: 0,
+  _interval: undefined,
+  emitStatusUpdate: () => {
+    const status: StatusUpdate = {
+      wpm: store.wpm,
+      errors: store.errors,
+      progress: store.progress,
+      duration: store.duration
+    }
+
+    store.socket.emit('update_racer_status', status);
+  },
+  startClientInterval: () => {
+    store._interval = setInterval(store.emitStatusUpdate, 1000);
+  },
+  stopClientInterval: () => clearInterval(store._interval)
 })

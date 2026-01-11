@@ -17,6 +17,7 @@ export interface Racer extends User {
   progress?: number;
   wpm?: number;
   duration?: number;
+  errors?: number;
 }
 
 const users = ref<User[]>([]);
@@ -40,18 +41,20 @@ onBeforeMount(() => {
     raceStatus.value = RaceStatus[key];
   });
   store.socket.on('update_racers', onUpdateRacers);
-  store.socket.on('update_racer_progress', ({ sid, progress }) => {
-    let racer = racers.value.find((r) => r.sid == sid);
-    racer && (racer.progress = progress);
+
+  store.socket.on('update_racer_status', ({ sid, wpm, errors, progress, duration }) => {
+    const racer = racers.value.find((r) => r.sid == sid);
+
+    if (!racer) {
+      return
+    }
+
+    racer.wpm = wpm
+    racer.errors = errors
+    racer.progress = progress
+    racer.duration = duration
   });
-  store.socket.on('update_racer_wpm', ({ sid, wpm }) => {
-    let racer = racers.value.find((r) => r.sid == sid);
-    racer && (racer.wpm = wpm);
-  });
-  store.socket.on('update_racer_duration', ({ sid, duration }) => {
-    let racer = racers.value.find((r) => r.sid == sid);
-    racer && (racer.duration = duration);
-  });
+
   store.socket.on('update_prompt', (data) => (store.prompt = data));
 });
 
@@ -73,8 +76,16 @@ const onUpdateRacers = (data: { sid: string; progress: number }[]) => {
 watch(raceStatus, (status) => {
   if (status == RaceStatus.IN_PROGRESS) {
     store.clientStartTime = new Date().getTime();
+    store.startClientInterval();
   }
 });
+
+watch(() => store.progress, (p) => {
+  if (p == 100) {
+    store.emitStatusUpdate();
+    store.stopClientInterval();
+  }
+})
 
 store.socket.on('update_users', updateUsers);
 </script>
@@ -109,15 +120,15 @@ store.socket.on('update_users', updateUsers);
       <RaceTrack :racers="racers" />
       <Prompt :disabled="raceStatus != RaceStatus.IN_PROGRESS"></Prompt>
     </template>
+
+    <template v-if="raceStatus === RaceStatus.TERMINATED">
+      TODO: race was terminated
+    </template>
+
+    <template v-else-if="raceStatus == RaceStatus.FINISHED">
+      <RacersGrid :users :racers :race-status />
+    </template>
   </div>
-
-  <template v-if="raceStatus === RaceStatus.TERMINATED">
-    TODO: race was terminated
-  </template>
-
-  <template v-else-if="raceStatus == RaceStatus.FINISHED">
-    <RacersGrid :users :racers :race-status />
-  </template>
 </template>
 
 <style>

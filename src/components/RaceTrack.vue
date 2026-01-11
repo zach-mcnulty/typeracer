@@ -42,7 +42,7 @@ onMounted(() => {
         {{ store.socket.id == r.sid ? '(You)' : '' }}
         <img
           src="../assets/27186974_ca46_2u5r_220404.svg"
-          style="height: 50px; transform: scaleX(-1); position: relative;z-index: 1;"
+          style="height: 50px; transform: scaleX(-1); position: relative; z-index: 1;"
           :style="'left: ' + racersPixelsFromLeft[i] + 'px'"
           ref="cars"
         >

@@ -38,14 +38,14 @@ const speed = computed<number>(() => {
   return 0
 })
 
-const ticks = new Array(6 * 3 + 8);
-const needleRotate = computed(() => speed.value / 0.54 - 110)
+defineExpose({speed});
 
 watch(() => props.superDuperPauserOfDoom, (bool) => {
   if (bool) {
     clearInterval(currentTimeInterval)
-    store.socket.emit("update_racer_wpm", speed.value)
-    store.socket.emit("update_racer_duration", new Date().getTime() - store.clientStartTime)
+    // TODO: move these somewhere better (do not wait for superDuperPauserOfDoom to be true)
+    store.wpm = speed.value
+    store.duration = new Date().getTime() - store.clientStartTime
   }
 })
 </script>

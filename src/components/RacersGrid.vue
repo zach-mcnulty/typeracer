@@ -71,7 +71,7 @@ const refreshUsername = (user: User) => {
               {{ u.username }}
 
               <button class="btn btn-circle btn-xs btn-ghost" v-if="u.sid === store.socket.id" @click="refreshUsername">
-                <img src="https://www.svgrepo.com/show/425978/refresh.svg" alt="" class="w-75 h-75">
+                <img src="https://www.svgrepo.com/show/425978/refresh.svg" alt="" class="w-75">
               </button>
             </template>
             <template v-else>
