@@ -36,11 +36,14 @@ const createRace = () => {
 onBeforeMount(() => {
   store.socket.on('update_countdown', (data: number) => {
     countdown.value = data;
-  });
+  })
   store.socket.on('update_race_status', (key) => {
     raceStatus.value = RaceStatus[key];
-  });
-  store.socket.on('update_racers', onUpdateRacers);
+    if (raceStatus.value == RaceStatus.INACTIVE) {
+      store.clearUserStats()
+    }
+  })
+  store.socket.on('update_racers', onUpdateRacers)
 
   store.socket.on('update_racer_status', ({ sid, wpm, errors, progress, duration }) => {
     const racer = racers.value.find((r) => r.sid == sid);
@@ -53,36 +56,37 @@ onBeforeMount(() => {
     racer.errors = errors
     racer.progress = progress
     racer.duration = duration
-  });
+  })
 
   store.socket.on('update_prompt', (data) => (store.prompt = data));
-});
+})
 
 const onUpdateRacers = (data: { sid: string; progress: number }[]) => {
   let usernamesBySid: { [key: string]: string } = {};
 
   users.value.forEach((u) => {
     usernamesBySid[u.sid] = u.username;
-  });
+  })
 
   racers.value = data.map((r) => {
     return {
       ...r,
       username: usernamesBySid[r.sid],
-    };
-  });
-};
+    }
+  })
+}
 
 watch(raceStatus, (status) => {
   if (status == RaceStatus.IN_PROGRESS) {
-    store.clientStartTime = new Date().getTime();
+    store.clientStartTime = new Date().getTime()
     store.startClientInterval();
   }
-});
+})
 
-watch(() => store.progress, (p) => {
-  if (p == 100) {
-    store.emitStatusUpdate();
+watch(() => store.wpm, (p) => { // watching wpm because that gets set in speedometer when the prompt has been fully typed
+  if (store.progress == 100) {
+    store.duration = new Date().getTime() - store.clientStartTime
+    store.emitUpdateRacerStatus();
     store.stopClientInterval();
   }
 })

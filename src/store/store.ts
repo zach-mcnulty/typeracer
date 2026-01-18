@@ -10,9 +10,10 @@ interface Store {
   errors: number
   progress: number
   duration: number
-  _interval?: NodeJS.Timeout
+  _interval?: NodeJS.Timeout,
+  clearUserStats: () => void
 
-  emitStatusUpdate: () => void
+  emitUpdateRacerStatus: () => void
   startClientInterval: () => void
   stopClientInterval: () => void
 }
@@ -33,7 +34,7 @@ export const store = reactive<Store>({
   progress: 0,
   duration: 0,
   _interval: undefined,
-  emitStatusUpdate: () => {
+  emitUpdateRacerStatus: () => {
     const status: StatusUpdate = {
       wpm: store.wpm,
       errors: store.errors,
@@ -44,7 +45,13 @@ export const store = reactive<Store>({
     store.socket.emit('update_racer_status', status);
   },
   startClientInterval: () => {
-    store._interval = setInterval(store.emitStatusUpdate, 1000);
+    store._interval = setInterval(store.emitUpdateRacerStatus, 1000);
   },
-  stopClientInterval: () => clearInterval(store._interval)
+  stopClientInterval: () => clearInterval(store._interval),
+  clearUserStats: () => {
+    store.wpm = 0;
+    store.errors = 0;
+    store.progress = 0;
+    store.duration = 0;
+  }
 })

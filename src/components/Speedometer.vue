@@ -3,10 +3,6 @@ import { ref, computed, onMounted, onUnmounted, watch } from "vue";
 import { store } from "../store/store"
 import Gauge from "./Gauge.vue";
 
-
-// TODO: Improve jankiness (speedometer freaks out at the start)
-// Add numbers to the ticks
-
 const props = defineProps<{
   numAllTypedEntries: number
   superDuperPauserOfDoom: boolean
@@ -43,9 +39,7 @@ defineExpose({speed});
 watch(() => props.superDuperPauserOfDoom, (bool) => {
   if (bool) {
     clearInterval(currentTimeInterval)
-    // TODO: move these somewhere better (do not wait for superDuperPauserOfDoom to be true)
     store.wpm = speed.value
-    store.duration = new Date().getTime() - store.clientStartTime
   }
 })
 </script>

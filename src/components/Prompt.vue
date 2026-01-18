@@ -10,7 +10,6 @@ const promptRef = useTemplateRef("prompt")
 const userInput = ref("");
 const checkeredFlag = ref(false);
 const errorCount = ref(0);
-const speedometer = useTemplateRef('speedometer');
 
 const indexOfCursor = computed(() => indexOfStartOfCurrentWord.value + userInput.value.length);
 const indexOfStartOfCurrentWord = ref(0)
@@ -50,7 +49,7 @@ watch(userInput, (current, previous) => {
   }
 
   store.progress = progress.value
-  // TODO: somewhere in here update the errors to the store
+  store.errors = errorCount.value
 })
 
 watch(() => props.disabled, () => {

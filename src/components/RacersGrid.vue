@@ -14,7 +14,8 @@ const columns = reactive([
   { field: 'username', header: 'Username' },
   { field: 'ready', header: 'Ready?' },
   { field: 'wpm', header: 'WPM' },
-  { field: 'duration', header: 'Duration' }
+  { field: 'duration', header: 'Duration' },
+  { field: 'errors', header: 'Errors' },
 ])
 
 const visibleColumns = computed(() => {
@@ -23,7 +24,7 @@ const visibleColumns = computed(() => {
     case RaceStatus.TERMINATED:
       return columns.filter(({ field }) => field !== 'ready')
     case RaceStatus.INACTIVE:
-      return columns.filter(({ field }) => !['wpm', 'duration'].includes(field))
+      return columns.filter(({ field }) => !['wpm', 'duration', 'errors'].includes(field))
   }
 })
 
