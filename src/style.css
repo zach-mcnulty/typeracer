@@ -1,2 +1,7 @@
 @import "tailwindcss";
 @plugin "daisyui";
+
+.checkered-flag {
+  background: repeating-conic-gradient(#fff 0 25%, #000 0 50%) 50% / 25px 25px;
+  transition: width 0.2s;
+}
